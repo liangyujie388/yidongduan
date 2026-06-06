@@ -1,0 +1,816 @@
+﻿
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1220">
+    <title>反诈中心 · 移动智能助手</title>
+    <style>
+        /* ========== 全局重置 & 深色风格（与PC端统一） ========== */
+        :root {
+            --bg: #0b1220;
+            --text: rgba(255,255,255,.92);
+            --muted: rgba(255,255,255,.70);
+            --line: rgba(255,255,255,.12);
+            --panel: rgba(255,255,255,.06);
+            --shadow: 0 8px 32px rgba(0,0,0,.35);
+            --primary: #6ee7ff;
+            --primary2: #a78bfa;
+            --ok: #7cf29a;
+            --warn: #ffd166;
+            --danger: #ff6b6b;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: radial-gradient(1200px 700px at 20% 10%, #1a2a6c55, transparent), radial-gradient(900px 500px at 90% 20%, #00c6ff33, transparent), var(--bg);
+            min-height: 100vh;
+            padding-bottom: calc(70px + var(--safe-bottom));
+        }
+
+        /* 顶部导航简化 */
+        .mobile-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(15, 45, 120, 0.65);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,.10);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand__logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            color: #07101c;
+        }
+
+        .brand__name {
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .config-btn {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 30px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        /* 底部导航栏 (mobile) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 16, 35, 0.92);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid rgba(110,231,255,.18);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+            z-index: 30;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,.65);
+            font-size: 11px;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+            .nav-item.active {
+                background: rgba(110,231,255,.16);
+                color: var(--primary);
+            }
+
+        .nav-icon {
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        /* 主面板容器 */
+        .page-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 12px 12px 20px;
+        }
+
+        .panel {
+            display: none;
+            animation: fade 0.2s ease;
+        }
+
+            .panel.active-panel {
+                display: block;
+            }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 卡片 / 通用组件 (复用PC风格) */
+        .card {
+            background: rgba(0,0,0,.28);
+            border: 1px solid rgba(110,231,255,.12);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(4px);
+        }
+
+        .card-title {
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            border: 1px solid rgba(255,255,255,.18);
+            background: rgba(255,255,255,.08);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: rgba(110,231,255,.18);
+            border-color: rgba(110,231,255,.4);
+        }
+
+        .input, .textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(0,0,0,.3);
+            border: 1px solid rgba(110,231,255,.2);
+            color: white;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .risk {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-weight: bold;
+        }
+
+        .risk--low {
+            background: rgba(124,242,154,.2);
+            color: var(--ok);
+        }
+
+        .risk--mid {
+            background: rgba(255,209,102,.2);
+            color: var(--warn);
+        }
+
+        .risk--high {
+            background: rgba(255,107,107,.2);
+            color: var(--danger);
+        }
+
+        /* ----- 聊天界面 (核心) ----- */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 150px - 70px);
+            max-height: 620px;
+            background: rgba(0,0,0,.2);
+            border-radius: 24px;
+            border: 1px solid rgba(110,231,255,.12);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-msg {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+        }
+
+        .chat-msg--ai {
+            align-self: flex-start;
+        }
+
+        .chat-msg--user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .chat-msg__avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .chat-msg--user .chat-msg__avatar {
+            background: rgba(255,255,255,.2);
+        }
+
+        .chat-msg__bubble {
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 20px;
+            padding: 10px 14px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-msg--user .chat-msg__bubble {
+            background: rgba(110,231,255,.14);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,.4);
+            border-top: 1px solid rgba(255,255,255,.08);
+        }
+
+        .chat-textarea {
+            flex: 1;
+            background: rgba(0,0,0,.5);
+            border: 1px solid rgba(110,231,255,.2);
+            border-radius: 28px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 14px;
+            resize: none;
+            max-height: 100px;
+            font-family: inherit;
+        }
+
+        .voice-btn, .send-btn, .attach-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 30px;
+            background: rgba(110,231,255,.12);
+            border: 1px solid rgba(110,231,255,.2);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+        }
+
+            .voice-btn.recording {
+                background: #ff4757;
+                animation: pulse 1s infinite;
+                border-color: #ff6b6b;
+            }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .attach-chip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 6px 12px 0;
+        }
+
+        .chip {
+            background: rgba(110,231,255,.2);
+            border-radius: 30px;
+            padding: 4px 10px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hidden {
+            display: none;
+        }
+        /* 场景卡片简版 */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+            gap: 10px;
+        }
+
+        .scenario-card {
+            background: rgba(255,255,255,.05);
+            border-radius: 18px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,.1);
+            cursor: pointer;
+        }
+
+        .story-preview {
+            margin-top: 12px;
+            background: rgba(0,0,0,.3);
+            border-radius: 16px;
+            padding: 12px;
+        }
+
+        .footer-note {
+            font-size: 10px;
+            text-align: center;
+            color: var(--muted);
+            margin-top: 20px;
+        }
+
+        .kb-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+        .kb-q {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .kb-a {
+            font-size: 13px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-header">
+        <div class="brand">
+            <div class="brand__logo">反</div>
+            <div class="brand__name">反诈中心 · 随身助手</div>
+        </div>
+        <button class="config-btn" id="openConfigBtnMobile">⚙️ 配置</button>
+    </div>
+
+    <div class="page-container" id="mainContainer">
+        <!-- 面板1: 智能助手 (核心聊天+语音) -->
+        <div class="panel active-panel" id="panel-assistant">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessagesMobile"></div>
+                <div id="attachmentsPreview" class="attach-chip"></div>
+                <div class="chat-input-area">
+                    <button class="attach-btn" id="attachBtnMobile" type="button">📎</button>
+                    <textarea class="chat-textarea" id="chatInputMobile" rows="1" placeholder="输入或点击🎙️语音转文字..."></textarea>
+                    <button class="voice-btn" id="voiceBtnMobile" type="button">🎙️</button>
+                    <button class="send-btn" id="sendBtnMobile" type="button">➤</button>
+                </div>
+            </div>
+            <div class="footer-note">🔍 支持图片/视频分析，点击📎上传。语音实时转文字，安全防诈。</div>
+        </div>
+
+        <!-- 面板2: 场景模拟 (淡化) -->
+        <div class="panel" id="panel-scene">
+            <div class="card">
+                <div class="card-title">📖 典型骗局剧场</div>
+                <div class="scenario-grid" id="scenarioList">
+                    <div class="scenario-card" data-scene="刷单返利">💸 刷单返利</div>
+                    <div class="scenario-card" data-scene="游戏交易">🎮 游戏交易</div>
+                    <div class="scenario-card" data-scene="冒充公检法">👮 冒充公检法</div>
+                </div>
+                <div class="story-preview" id="storyPreviewMobile">
+                    <div><strong>剧情：</strong> <span id="storyTitleMobile">点击上方场景</span></div>
+                    <pre id="storyBodyMobile" style="white-space:pre-wrap; font-size:12px; margin-top:6px;"></pre>
+                    <button class="btn" id="copyStoryMobileBtn" style="margin-top:8px;">复制给AI助手</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面板3: 风险研判简化版 -->
+        <div class="panel" id="panel-judge">
+            <div class="card">
+                <div class="card-title">⚠️ 快速风险研判</div>
+                <input type="text" id="urlJudgeMobile" class="input" placeholder="可疑链接 (URL)">
+                <textarea id="textJudgeMobile" class="textarea" placeholder="对方话术/聊天内容"></textarea>
+                <div class="row">
+                    <button class="btn btn-primary" id="runJudgeMobileBtn">开始研判</button>
+                    <button class="btn" id="fillDemoMobileBtn">填充示例</button>
+                </div>
+                <div style="margin-top:12px;">
+                    <span id="riskBadgeMobile" class="risk risk--low">LOW</span>
+                    <ul id="signalsMobile" style="margin-top:8px; padding-left:18px;"></ul>
+                    <div id="adviceMobile" class="card" style="margin-top:6px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面板4: 一键举报 -->
+        <div class="panel" id="panel-report">
+            <div class="card">
+                <div class="card-title">📢 线索举报</div>
+                <select id="reportTypeMobile" class="input">
+                    <option>钓鱼链接</option>
+                    <option>冒充机构</option>
+                    <option>刷单返利</option>
+                </select>
+                <textarea id="reportEvidenceMobile" class="textarea" placeholder="描述证据内容（链接/账号/截图描述）"></textarea>
+                <button class="btn btn-primary" id="submitReportMobileBtn">提交举报（本地）</button>
+                <button class="btn" id="viewReportsMobileBtn">查看记录</button>
+                <div id="reportLogMobile" class="hidden" style="margin-top:12px; background:#00000040; padding:8px; border-radius:12px;"></div>
+            </div>
+        </div>
+
+        <!-- 面板5: 反诈小课堂 -->
+        <div class="panel" id="panel-kb">
+            <div class="card">
+                <div class="card-title">📚 反诈知识库</div>
+                <input type="text" id="kbSearchMobile" class="input" placeholder="搜索关键词...">
+                <div id="kbListMobile"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <div class="bottom-nav">
+        <button class="nav-item active" data-panel="assistant"><span class="nav-icon">🤖</span><span>反诈助手</span></button>
+        <button class="nav-item" data-panel="scene"><span class="nav-icon">🎭</span><span>场景模拟</span></button>
+        <button class="nav-item" data-panel="judge"><span class="nav-icon">🔍</span><span>风险研判</span></button>
+        <button class="nav-item" data-panel="report"><span class="nav-icon">📢</span><span>举报</span></button>
+        <button class="nav-item" data-panel="kb"><span class="nav-icon">📖</span><span>小课堂</span></button>
+    </div>
+
+    <!-- Dify 配置弹窗简单实现 -->
+    <div id="configOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center;">
+        <div style="background:#0b1220; border-radius:28px; width:85%; padding:20px; border:1px solid #6ee7ff40;">
+            <h4 style="margin:0 0 10px;">⚙️ Dify 配置</h4>
+            <input id="cfgBaseUrlMobile" class="input" placeholder="Base URL (https://api.dify.ai)" value="https://api.dify.ai">
+            <input id="cfgApiKeyMobile" class="input" placeholder="Dify API Key (PRO_KEY)" type="password">
+            <div class="row" style="margin-top:12px;">
+                <button id="saveConfigMobileBtn" class="btn btn-primary">保存</button>
+                <button id="closeConfigMobileBtn" class="btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="mobileFileInput" accept="image/*,video/*" multiple style="display:none">
+
+    <script>
+  (function(){
+    // ---------- 移动端全局配置 ----------
+    const STORAGE_KEYS = {
+      baseUrl: 'DIFY_BASE_URL',
+      apiKey: 'DIFY_PRO_API_KEY'
+    };
+    let difyBaseUrl = localStorage.getItem(STORAGE_KEYS.baseUrl) || "https://api.dify.ai";
+    let difyApiKey = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
+
+    // 聊天全局变量
+    let pendingFiles = [];
+    const chatMessagesDiv = document.getElementById('chatMessagesMobile');
+    const chatInput = document.getElementById('chatInputMobile');
+    const sendBtn = document.getElementById('sendBtnMobile');
+    const attachBtn = document.getElementById('attachBtnMobile');
+    const fileInput = document.getElementById('mobileFileInput');
+    const previewDiv = document.getElementById('attachmentsPreview');
+    const voiceBtn = document.getElementById('voiceBtnMobile');
+
+    // 语音识别实例
+    let recognition = null;
+    let isRecording = false;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'zh-CN';
+    }
+
+    // 辅助函数
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+    async function copyText(txt) { try { await navigator.clipboard.writeText(txt); alert('已复制'); } catch(e) { alert('手动复制'); } }
+
+    // 渲染附件标签
+    function renderAttachments() {
+      if(!previewDiv) return;
+      if(pendingFiles.length === 0) { previewDiv.innerHTML = ''; return; }
+      previewDiv.innerHTML = pendingFiles.map((f,idx) => `<div class="chip">${f.name} <span style="cursor:pointer;" data-idx="${idx}">✖️</span></div>`).join('');
+      document.querySelectorAll('[data-idx]').forEach(el => {
+        el.addEventListener('click', (e) => { let idx = parseInt(el.dataset.idx); pendingFiles.splice(idx,1); renderAttachments(); });
+      });
+    }
+
+    // 聊天消息追加
+    function appendAiMsg(html) {
+      let div = document.createElement('div');
+      div.className = 'chat-msg chat-msg--ai';
+      div.innerHTML = `<div class="chat-msg__avatar">AI</div><div class="chat-msg__bubble">${html}</div>`;
+      chatMessagesDiv.appendChild(div);
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    }
+    function appendUserMsg(text, files=[]) {
+      let div = document.createElement('div');
+      div.className = 'chat-msg chat-msg--user';
+      let mediaHtml = '';
+      if(files.length) mediaHtml = `<div>📎 ${files.map(f=>f.name).join(',')}</div>`;
+      div.innerHTML = `<div class="chat-msg__bubble">${text ? escapeHtml(text) : ''} ${mediaHtml}</div><div class="chat-msg__avatar">我</div>`;
+      chatMessagesDiv.appendChild(div);
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    }
+    function appendThinking() {
+      let el = document.createElement('div');
+      el.className = 'chat-msg chat-msg--ai';
+      el.innerHTML = `<div class="chat-msg__avatar">AI</div><div class="chat-msg__bubble"><span>思考中...</span></div>`;
+      chatMessagesDiv.appendChild(el);
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+      return el;
+    }
+
+    // 调用dify工作流核心 (复用原有逻辑)
+    async function uploadFileToDify(file, user) {
+      const fd = new FormData(); fd.append('file', file); fd.append('user', user);
+      const res = await fetch(`${difyBaseUrl}/v1/files/upload`, {
+        method: 'POST', headers: { 'Authorization': `Bearer ${difyApiKey}` }, body: fd
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.message || '上传失败');
+      return data.id;
+    }
+    async function createStoryboardFromVideo(file) { // 简化视频关键帧提取 (实际调用原逻辑抽帧, 此处实现基础)
+      return file; // 为简洁，移动端暂时直接上传原视频，但dify可处理; 完整版可沿用原抽帧代码, 但避免体积过大
+    }
+    async function prepareWorkflowFiles(files, user) {
+      let workflowFiles = [];
+      for(let f of files){
+        let uploadTarget = f;
+        if(f.type.startsWith('video/')){
+          // 移动端简化处理，直接上传原视频（允许）
+        }
+        const fileId = await uploadFileToDify(uploadTarget, user);
+        workflowFiles.push({ type: 'image', transfer_method: 'local_file', upload_file_id: fileId });
+      }
+      return workflowFiles;
+    }
+    async function callDifyWorkflow({text, money_sent='未说明', user='mobile_user', files=[]}) {
+      if(!difyApiKey) throw new Error('请先配置 Dify API Key (右上角设置)');
+      let workflowFiles = files.length ? await prepareWorkflowFiles(files, user) : [];
+      const payload = {
+        inputs: { text: String(text), money_sent: String(money_sent), files_user: workflowFiles },
+        response_mode: 'blocking', user: user
+      };
+      const res = await fetch(`${difyBaseUrl}/v1/workflows/run`, {
+        method: 'POST', headers: { 'Authorization': `Bearer ${difyApiKey}`, 'Content-Type':'application/json' }, body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.message || '工作流调用失败');
+      const answer = result?.data?.outputs?.answer || result?.answer || JSON.stringify(result.outputs);
+      return { answer: answer };
+    }
+
+    async function sendMessage() {
+      let text = chatInput.value.trim();
+      if(!text && pendingFiles.length===0) return;
+      const filesCopy = [...pendingFiles];
+      appendUserMsg(text || '📎附件', filesCopy);
+      chatInput.value = '';
+      pendingFiles = [];
+      renderAttachments();
+      const thinkEl = appendThinking();
+      try {
+        const res = await callDifyWorkflow({ text: text, money_sent: '未说明', files: filesCopy });
+        thinkEl.remove();
+        appendAiMsg(res.answer.replace(/\n/g,'<br>'));
+      } catch(err) {
+        thinkEl.remove();
+        appendAiMsg(`⚠️ 调用失败: ${err.message}<br>请检查API Key或网络`);
+      }
+    }
+
+    // 语音转文字
+    function startVoiceInput() {
+      if(!recognition) { alert('当前浏览器不支持语音识别，请使用Chrome或Safari移动版'); return; }
+      if(isRecording) return;
+      recognition.start();
+      isRecording = true;
+      voiceBtn.classList.add('recording');
+      recognition.onresult = (event) => {
+        let transcript = event.results[0][0].transcript;
+        let current = chatInput.value;
+        chatInput.value = current + (current ? ' ' : '') + transcript;
+        chatInput.dispatchEvent(new Event('input'));
+        stopRecording();
+      };
+      recognition.onerror = (e) => { console.warn(e); stopRecording(); alert('语音识别出错，请重试'); };
+      recognition.onend = () => { stopRecording(); };
+    }
+    function stopRecording() {
+      isRecording = false;
+      voiceBtn.classList.remove('recording');
+      try { recognition.stop(); } catch(e) {}
+    }
+    voiceBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if(isRecording) stopRecording();
+      else startVoiceInput();
+    });
+
+    // 附件逻辑
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      Array.from(e.target.files).forEach(f => pendingFiles.push(f));
+      renderAttachments();
+      fileInput.value = '';
+    });
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }});
+
+    // 初始化欢迎语
+    appendAiMsg("👋 你好！我是AI反诈助手（支持语音🎙️）。<br>输入可疑话术、上传截图/视频，我将分析风险并生成劝阻建议。");
+
+    // 场景模拟数据
+    const storiesMap = {
+      '刷单返利':'【剧情】群里兼职日赚300，先返20元，后要求垫付解冻。话术："系统流程，影响信誉分"。目标识别先小利诱导。',
+      '游戏交易':'【剧情】低价皮肤，加QQ发担保链接，要求外站付款。话术："平台手续费高，走链接更安全"。识别跳转外部链接。',
+      '冒充公检法':'【剧情】电话称涉嫌洗钱，要求屏幕共享转入安全账户。话术："保密案件，不能告诉家人"。识别安全账户恐吓。'
+    };
+    document.querySelectorAll('.scenario-card').forEach(card => {
+      card.addEventListener('click', () => {
+        let scene = card.getAttribute('data-scene');
+        document.getElementById('storyTitleMobile').innerText = `场景：${scene}`;
+        document.getElementById('storyBodyMobile').innerText = storiesMap[scene] || '暂无';
+      });
+    });
+    document.getElementById('copyStoryMobileBtn')?.addEventListener('click', () => {
+      let text = document.getElementById('storyBodyMobile')?.innerText || '';
+      copyText(text);
+      alert('已复制，可切换到“反诈助手”粘贴发送分析');
+    });
+
+    // 风险研判规则引擎
+    const rules = [
+      { score:35, hit:(u,t)=>/(安全账户|转入.*账户|洗钱|公检法)/.test(t), msg:'冒充公检法/安全账户话术'},
+      { score:25, hit:(u,t)=>/(刷单|返利|垫付|解冻)/.test(t), msg:'刷单返利特征'},
+      { score:20, hit:(u,t)=>/(验证码|屏幕共享|会议软件)/.test(t), msg:'验证码/屏幕共享风险'},
+      { score:15, hit:(u,t)=>/(http|https)/.test(t), msg:'包含外部链接'},
+    ];
+    document.getElementById('runJudgeMobileBtn')?.addEventListener('click', () => {
+      let url = document.getElementById('urlJudgeMobile').value;
+      let text = document.getElementById('textJudgeMobile').value;
+      let total=0, hits=[];
+      rules.forEach(r=>{ if(r.hit(url,text)){ total+=r.score; hits.push(r.msg); } });
+      let level = total>=55?'HIGH':(total>=30?'MID':'LOW');
+      let badge = document.getElementById('riskBadgeMobile');
+      badge.innerText = level;
+      badge.className = `risk risk--${level==='HIGH'?'high':(level==='MID'?'mid':'low')}`;
+      document.getElementById('signalsMobile').innerHTML = hits.map(h=>`<li>${h}</li>`).join('');
+      document.getElementById('adviceMobile').innerHTML = `建议：不要点击链接/转账，通过官方渠道核实。${level==='HIGH'?'立即报警！':''}`;
+    });
+    document.getElementById('fillDemoMobileBtn')?.addEventListener('click',()=>{
+      document.getElementById('urlJudgeMobile').value = "http://bank-verify.cc";
+      document.getElementById('textJudgeMobile').value = "10分钟内核验否则影响征信，点击链接输入验证码。";
+    });
+
+    // 举报本地存储
+    document.getElementById('submitReportMobileBtn')?.addEventListener('click',()=>{
+      let type = document.getElementById('reportTypeMobile').value;
+      let evi = document.getElementById('reportEvidenceMobile').value;
+      if(!evi) return alert('填写证据');
+      let list = JSON.parse(localStorage.getItem('fraud_reports')||'[]');
+      list.unshift({type, evi, time:new Date().toISOString()});
+      localStorage.setItem('fraud_reports',JSON.stringify(list));
+      alert('举报已记录(本地)');
+    });
+    document.getElementById('viewReportsMobileBtn')?.addEventListener('click',()=>{
+      let list = JSON.parse(localStorage.getItem('fraud_reports')||'[]');
+      let logDiv = document.getElementById('reportLogMobile');
+      logDiv.classList.remove('hidden');
+      logDiv.innerHTML = list.length? list.map(l=>`[${l.time}] ${l.type}: ${l.evi}`).join('<br>'): '暂无记录';
+    });
+
+    // 知识库静态
+    const kbData = [
+      {q:'刷单返利特征', a:'先小额返利，后大额垫付解冻'},
+      {q:'安全账户', a:'公检法无安全账户，都是诈骗'},
+      {q:'验证码', a:'验证码等于取款密码，绝不能给'},
+    ];
+    function renderKB(kw=''){
+      let html = kbData.filter(k=> (k.q+k.a).includes(kw)).map(k=>`<div class="kb-item"><div class="kb-q">❓ ${escapeHtml(k.q)}</div><div class="kb-a">${escapeHtml(k.a)}</div></div>`).join('');
+      document.getElementById('kbListMobile').innerHTML = html || '<div>无匹配内容</div>';
+    }
+    document.getElementById('kbSearchMobile')?.addEventListener('input', e=>renderKB(e.target.value));
+    renderKB();
+
+    // 底部导航切换
+    const panels = ['assistant','scene','judge','report','kb'];
+    const panelElements = {
+      assistant: document.getElementById('panel-assistant'),
+      scene: document.getElementById('panel-scene'),
+      judge: document.getElementById('panel-judge'),
+      report: document.getElementById('panel-report'),
+      kb: document.getElementById('panel-kb')
+    };
+    function switchPanel(panelId) {
+      Object.keys(panelElements).forEach(id => panelElements[id]?.classList.remove('active-panel'));
+      panelElements[panelId]?.classList.add('active-panel');
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        if(btn.dataset.panel === panelId) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+    }
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
+    });
+
+    // Dify 配置弹窗
+    const configOverlay = document.getElementById('configOverlay');
+    document.getElementById('openConfigBtnMobile').addEventListener('click',()=>{
+      document.getElementById('cfgBaseUrlMobile').value = difyBaseUrl;
+      document.getElementById('cfgApiKeyMobile').value = difyApiKey;
+      configOverlay.style.display = 'flex';
+    });
+    document.getElementById('closeConfigMobileBtn').addEventListener('click',()=> configOverlay.style.display = 'none');
+    document.getElementById('saveConfigMobileBtn').addEventListener('click',()=>{
+      let newUrl = document.getElementById('cfgBaseUrlMobile').value.trim();
+      let newKey = document.getElementById('cfgApiKeyMobile').value.trim();
+      if(newUrl) { difyBaseUrl = newUrl; localStorage.setItem(STORAGE_KEYS.baseUrl, newUrl); }
+      if(newKey) { difyApiKey = newKey; localStorage.setItem(STORAGE_KEYS.apiKey, newKey); }
+      alert('配置已保存，将用于后续AI分析');
+      configOverlay.style.display = 'none';
+    });
+
+    // 初始加载提示key缺失
+    if(!difyApiKey) setTimeout(()=> alert('请点击右上角⚙️配置Dify API Key，以便AI工作流分析'), 500);
+  })();
+    </script>
+</body>
+</html>
+```
